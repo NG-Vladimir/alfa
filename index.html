@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Alpha Cloud Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --blue: #007AFF; --green: #34C759; --red: #FF3B30; --gray: #8E8E93; --separator: #C6C6C8; }
         body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: #000; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
@@ -68,17 +68,21 @@
     </div>
 
     <script>
+        // Твои проверенные ключи
         const SUPABASE_URL = 'https://sdvqayobvrxlmvytshes.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdnFheW9idnJ4bG12eXRzaGVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODg1MzQsImV4cCI6MjA4NDE2NDUzNH0.bn1n6YUzH8gx66tmh36eLYXkcXmRF8pE9u7exks6ebc';
+        
+        // Создаем клиента Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let currentTable = null, activeDate = new Date().toISOString().split('T')[0], isEditMode = false;
 
         async function loadGridStatuses() {
             const grid = document.getElementById('tablesGrid');
-            grid.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
+            grid.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка столов...</div>';
             try {
-                const { data } = await supabase.from('attendance').select('table_number').eq('check_date', activeDate).eq('is_present', true);
+                const { data, error } = await supabase.from('attendance').select('table_number').eq('check_date', activeDate).eq('is_present', true);
+                if (error) throw error;
                 const activeTables = new Set(data?.map(r => r.table_number));
                 grid.innerHTML = '';
                 for (let i = 1; i <= 12; i++) {
@@ -88,56 +92,111 @@
                     btn.onclick = () => openTable(i);
                     grid.appendChild(btn);
                 }
-            } catch (e) { console.error(e); }
+            } catch (err) { 
+                console.error('Ошибка сетки:', err);
+                grid.innerHTML = '<div style="grid-column:1/4; color:red; text-align:center;">Ошибка загрузки столов</div>';
+            }
         }
 
         async function renderGuestList() {
             const container = document.getElementById('guestListContainer');
-            container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
-            const { data: guests } = await supabase.from('guests').select('*').eq('table_number', currentTable).order('full_name');
-            const { data: att } = await supabase.from('attendance').select('*').eq('check_date', activeDate).eq('table_number', currentTable);
-            container.innerHTML = '';
-            if (!guests || guests.length === 0) { container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Список пуст</div>'; return; }
-            guests.forEach(guest => {
-                const record = att?.find(r => r.guest_id === guest.id), isChecked = record ? record.is_present : true, div = document.createElement('div');
-                div.className = 'guest-row';
-                if (isEditMode) { div.innerHTML = `<span class="g-name">${guest.full_name}</span><button class="text-btn" style="color:var(--red); font-size:14px;" onclick="deleteGuest(${guest.id})">Удалить</button>`; }
-                else { div.innerHTML = `<span class="g-name">${guest.full_name}</span><label class="switch"><input type="checkbox" ${isChecked ? 'checked' : ''} data-id="${guest.id}"><span class="slider"></span></label>`; }
-                container.appendChild(div);
-            });
+            container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка списка...</div>';
+            try {
+                const { data: guests } = await supabase.from('guests').select('*').eq('table_number', currentTable).order('full_name');
+                const { data: att } = await supabase.from('attendance').select('*').eq('check_date', activeDate).eq('table_number', currentTable);
+                container.innerHTML = '';
+                if (!guests || guests.length === 0) { 
+                    container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Список пуст</div>'; 
+                    return; 
+                }
+                guests.forEach(guest => {
+                    const record = att?.find(r => r.guest_id === guest.id);
+                    const isChecked = record ? record.is_present : true;
+                    const div = document.createElement('div');
+                    div.className = 'guest-row';
+                    if (isEditMode) {
+                        div.innerHTML = `<span>${guest.full_name}</span><button class="text-btn" style="color:var(--red);" onclick="deleteGuest(${guest.id})">Удалить</button>`;
+                    } else {
+                        div.innerHTML = `<span>${guest.full_name}</span><label class="switch"><input type="checkbox" ${isChecked ? 'checked' : ''} data-id="${guest.id}"><span class="slider"></span></label>`;
+                    }
+                    container.appendChild(div);
+                });
+            } catch (err) { console.error('Ошибка списка:', err); }
         }
 
-        async function addNewGuest() { const name = prompt("ФИО гостя:"); if (!name) return; await supabase.from('guests').insert([{ full_name: name, table_number: currentTable }]); renderGuestList(); }
-        async function deleteGuest(id) { if (!confirm("Удалить?")) return; await supabase.from('guests').delete().eq('id', id); renderGuestList(); }
+        async function addNewGuest() {
+            const name = prompt("ФИО гостя:");
+            if (!name) return;
+            await supabase.from('guests').insert([{ full_name: name, table_number: currentTable }]);
+            renderGuestList();
+        }
+
+        async function deleteGuest(id) {
+            if (!confirm("Удалить гостя?")) return;
+            await supabase.from('guests').delete().eq('id', id);
+            renderGuestList();
+        }
+
         async function saveAttendance() {
-            const btn = document.getElementById('saveBtn'); btn.innerText = "Сохранение...";
-            const inputs = document.querySelectorAll('#guestListContainer input[type="checkbox"]'), updates = Array.from(inputs).map(i => ({ guest_id: i.dataset.id, check_date: activeDate, is_present: i.checked, table_number: currentTable }));
+            const btn = document.getElementById('saveBtn');
+            btn.innerText = "Сохранение...";
+            const inputs = document.querySelectorAll('#guestListContainer input[type="checkbox"]');
+            const updates = Array.from(inputs).map(i => ({
+                guest_id: i.dataset.id,
+                check_date: activeDate,
+                is_present: i.checked,
+                table_number: currentTable
+            }));
+
             await supabase.from('attendance').delete().eq('check_date', activeDate).eq('table_number', currentTable);
             if (updates.length > 0) await supabase.from('attendance').insert(updates);
-            btn.innerText = "Готово!"; setTimeout(() => { closeModal('modal-table'); btn.innerText = "Сохранить"; }, 600);
+            
+            btn.innerText = "Готово!";
+            setTimeout(() => { closeModal('modal-table'); btn.innerText = "Сохранить"; }, 600);
         }
 
         async function openStats() {
             document.getElementById('modal-stats').classList.add('active');
             const container = document.getElementById('statsContent');
+            container.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка истории...</div>';
             const { data } = await supabase.from('attendance').select('*').eq('is_present', true);
             const dates = [...new Set(data?.map(r => r.check_date))].sort().reverse();
+            
             container.innerHTML = '<div class="ios-list">';
-            dates.forEach((d) => {
-                const dayLog = data.filter(r => r.check_date === d), byTable = {};
+            if (!dates.length) { container.innerHTML = '<div style="padding:20px; text-align:center;">Нет данных за прошлые дни</div>'; return; }
+            
+            dates.forEach(d => {
+                const dayLog = data.filter(r => r.check_date === d);
+                const byTable = {};
                 dayLog.forEach(r => byTable[r.table_number] = (byTable[r.table_number] || 0) + 1);
-                let details = ''; for(let t=1; t<=12; t++) if(byTable[t]) details += `Стол ${t}: <b>${byTable[t]}</b><br>`;
-                container.querySelector('.ios-list').innerHTML += `<div class="guest-row" onclick="this.nextElementSibling.classList.toggle('open')"><span>${d}</span><span class="count-badge">${dayLog.length}</span></div><div class="stats-detail">${details}</div>`;
+                let details = '';
+                for(let t=1; t<=12; t++) if(byTable[t]) details += `Стол ${t}: <b>${byTable[t]}</b><br>`;
+                
+                container.querySelector('.ios-list').innerHTML += `
+                    <div class="guest-row" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <span>${d}</span>
+                        <span class="count-badge">${dayLog.length}</span>
+                    </div>
+                    <div class="stats-detail">${details}</div>`;
             });
         }
 
-        function updateDateLabel() { const label = document.getElementById('dateBtnLabel'), today = new Date().toISOString().split('T')[0], parts = activeDate.split('-'); label.innerText = (activeDate === today) ? "Сегодня" : `${parts[2]}.${parts[1]}`; label.style.color = (activeDate === today) ? "var(--blue)" : "var(--red)"; }
+        function updateDateLabel() {
+            const label = document.getElementById('dateBtnLabel');
+            const today = new Date().toISOString().split('T')[0];
+            const parts = activeDate.split('-');
+            label.innerText = (activeDate === today) ? "Сегодня" : `${parts[2]}.${parts[1]}`;
+            label.style.color = (activeDate === today) ? "var(--blue)" : "var(--red)";
+        }
+
         function changeDate(val) { if(!val) return; activeDate = val; updateDateLabel(); loadGridStatuses(); }
         function openTable(num) { currentTable = num; isEditMode = false; document.getElementById('editBtn').innerText = "Изм."; document.getElementById('tableTitle').innerText = `Стол №${num}`; document.getElementById('modal-table').classList.add('active'); renderGuestList(); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id === 'modal-table') loadGridStatuses(); }
         function toggleEditMode() { isEditMode = !isEditMode; document.getElementById('editBtn').innerText = isEditMode ? "Готово" : "Изм."; renderGuestList(); }
 
-        updateDateLabel(); loadGridStatuses();
+        // Запуск
+        updateDateLabel();
+        loadGridStatuses();
     </script>
 </body>
 </html>
