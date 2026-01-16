@@ -15,7 +15,7 @@
         .date-btn { background: rgba(118, 118, 128, 0.12); color: var(--blue); font-weight: 500; padding: 6px 12px; border-radius: 8px; font-size: 15px; border: none; position: relative; }
         .date-input-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; }
-        .table-card { background: var(--card); border-radius: 16px; height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative; transition: all 0.1s; cursor: pointer; }
+        .table-card { background: var(--card); border-radius: 16px; height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: all 0.1s; cursor: pointer; }
         .table-card.done { border: 2.5px solid var(--green); background: #F0FFF4; }
         .t-num { font-size: 26px; font-weight: 700; color: var(--blue); }
         .done .t-num { color: var(--green); }
@@ -37,7 +37,6 @@
         .stats-detail { display: none; background: #F8F8F8; padding: 12px 16px; font-size: 14px; border-bottom: 0.5px solid var(--separator); }
         .stats-detail.open { display: block; }
         .count-badge { background: #E5E5EA; color: #000; padding: 4px 10px; border-radius: 8px; font-weight: 700; }
-        .loader { text-align: center; padding: 20px; color: var(--gray); }
     </style>
 </head>
 <body>
@@ -52,7 +51,6 @@
         <div class="grid" id="tablesGrid"></div>
         <div style="padding: 0 20px;"><button onclick="openStats()" class="btn btn-sec" style="width: 100%;">История и Статистика</button></div>
     </div>
-
     <div id="modal-table" class="modal-view">
         <header>
             <button onclick="closeModal('modal-table')" class="text-btn">Назад</button>
@@ -62,44 +60,35 @@
         <div class="list-wrap"><div class="ios-list" id="guestListContainer"></div><button class="text-btn" style="padding: 16px; width:100%; text-align:left;" onclick="addNewGuest()">+ Добавить гостя</button></div>
         <div class="fab-bar"><button class="btn btn-main" onclick="saveAttendance()" id="saveBtn">Сохранить</button></div>
     </div>
-
     <div id="modal-stats" class="modal-view">
-        <header><button onclick="closeModal('modal-stats')" class="text-btn">Закрыть</button><h2>Статистика</h2><div style="width:50px"></div></header>
+        <header><button onclick="closeModal('modal-stats')" class="text-btn">Закрыть</button><h2>Статистика</h2></header>
         <div class="list-wrap" id="statsContent"></div>
     </div>
-
     <script>
         const SUPABASE_URL = 'https://sdvqayobvrxlmvytshes.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdnFheW9idnJ4bG12eXRzaGVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODg1MzQsImV4cCI6MjA4NDE2NDUzNH0.bn1n6YUzH8gx66tmh36eLYXkcXmRF8pE9u7exks6ebc';
-        
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let currentTable = null, activeDate = new Date().toISOString().split('T')[0], isEditMode = false;
 
         async function loadGridStatuses() {
             const grid = document.getElementById('tablesGrid');
-            grid.innerHTML = '<div class="loader">Загрузка...</div>';
-            try {
-                const { data, error } = await supabase.from('attendance').select('table_number').eq('check_date', activeDate).eq('is_present', true);
-                if (error) throw error;
-                const activeTables = new Set(data?.map(r => r.table_number));
-                grid.innerHTML = '';
-                for (let i = 1; i <= 12; i++) {
-                    const btn = document.createElement('button');
-                    btn.className = `table-card ${activeTables.has(i) ? 'done' : ''}`;
-                    btn.innerHTML = `<span class="t-num">${i}</span><span class="t-lbl">Стол</span>`;
-                    btn.onclick = () => openTable(i);
-                    grid.appendChild(btn);
-                }
-            } catch (err) { 
-                console.error(err);
-                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:red;">Ошибка подключения</div>'; 
+            grid.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
+            const { data } = await supabase.from('attendance').select('table_number').eq('check_date', activeDate).eq('is_present', true);
+            const activeTables = new Set(data?.map(r => r.table_number));
+            grid.innerHTML = '';
+            for (let i = 1; i <= 12; i++) {
+                const btn = document.createElement('button');
+                btn.className = `table-card ${activeTables.has(i) ? 'done' : ''}`;
+                btn.innerHTML = `<span class="t-num">${i}</span><span class="t-lbl">Стол</span>`;
+                btn.onclick = () => openTable(i);
+                grid.appendChild(btn);
             }
         }
 
         async function renderGuestList() {
             const container = document.getElementById('guestListContainer');
-            container.innerHTML = '<div class="loader">...</div>';
+            container.innerHTML = '<div style="padding:20px; text-align:center;">...</div>';
             const { data: guests } = await supabase.from('guests').select('*').eq('table_number', currentTable).order('full_name');
             const { data: att } = await supabase.from('attendance').select('*').eq('check_date', activeDate).eq('table_number', currentTable);
             container.innerHTML = '';
@@ -113,8 +102,12 @@
             });
         }
 
-        async function addNewGuest() { const name = prompt("ФИО гостя:"); if (!name) return; await supabase.from('guests').insert([{ full_name: name, table_number: currentTable }]); renderGuestList(); }
-        async function deleteGuest(id) { if (!confirm("Удалить?")) return; await supabase.from('guests').delete().eq('id', id); renderGuestList(); }
+        async function addNewGuest() {
+            const name = prompt("ФИО гостя:"); if (!name) return;
+            await supabase.from('guests').insert([{ full_name: name, table_number: currentTable }]);
+            renderGuestList();
+        }
+
         async function saveAttendance() {
             const btn = document.getElementById('saveBtn'); btn.innerText = "Сохранение...";
             const inputs = document.querySelectorAll('#guestListContainer input[type="checkbox"]'), updates = Array.from(inputs).map(i => ({ guest_id: i.dataset.id, check_date: activeDate, is_present: i.checked, table_number: currentTable }));
@@ -129,7 +122,6 @@
             const { data } = await supabase.from('attendance').select('*').eq('is_present', true);
             const dates = [...new Set(data?.map(r => r.check_date))].sort().reverse();
             container.innerHTML = '<div class="ios-list">';
-            if (!dates.length) container.innerHTML = '<div style="padding:20px; text-align:center;">Нет данных</div>';
             dates.forEach((d, idx) => {
                 const dayLog = data.filter(r => r.check_date === d), byTable = {};
                 dayLog.forEach(r => byTable[r.table_number] = (byTable[r.table_number] || 0) + 1);
@@ -143,6 +135,7 @@
         function openTable(num) { currentTable = num; isEditMode = false; document.getElementById('editBtn').innerText = "Изм."; document.getElementById('tableTitle').innerText = `Стол №${num}`; document.getElementById('modal-table').classList.add('active'); renderGuestList(); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id === 'modal-table') loadGridStatuses(); }
         function toggleEditMode() { isEditMode = !isEditMode; document.getElementById('editBtn').innerText = isEditMode ? "Готово" : "Изм."; renderGuestList(); }
+
         updateDateLabel(); loadGridStatuses();
     </script>
 </body>
