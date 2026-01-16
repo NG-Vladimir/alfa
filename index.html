@@ -41,6 +41,7 @@
         .guest-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 0.5px solid var(--separator); min-height: 24px; }
         .guest-row:last-child { border-bottom: none; }
         .g-name { font-size: 17px; font-weight: 400; color: #000; }
+        .del-btn, .rename-btn { color: var(--blue); font-size: 15px; background: none; border: none; padding: 0 10px; }
         
         /* Switch */
         .switch { position: relative; display: inline-block; width: 51px; height: 31px; flex-shrink: 0;}
@@ -122,8 +123,8 @@
         // ⚠️ ВНИМАНИЕ: ВСТАВЬ СЮДА СВОИ ДАННЫЕ ⚠️
         // ==========================================
         
-        const SUPABASE_URL = 'https://uwvrcnxztbnmmufevdbz.supabase.co'; // <-- ВСТАВЬ Project URL
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3dnJjbnh6dGJubW11ZmV2ZGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODk4MjksImV4cCI6MjA4NDE2NTgyOX0.acH6VuKZZx47j8yCzNpBJwpQyWJUq7BKRKerFPeDGeI';            // <-- ВСТАВЬ API Key
+        const SUPABASE_URL = 'https://uwvrcnxztbnmmufevdbz.supabase.co'; // Я вставил твой ID из скриншота
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3dnJjbnh6dGJubW11ZmV2ZGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODk4MjksImV4cCI6MjA4NDE2NTgyOX0.acH6VuKZZx47j8yCzNpBJwpQyWJUq7BKRKerFPeDGeI';          // <-- ВСТАВЬ КЛЮЧ ИЗ SUPABASE
 
         // ==========================================
 
@@ -165,8 +166,8 @@
             grid.innerHTML = '<div class="loader">Загрузка данных...</div>';
 
             // Проверка соединения
-            if (SUPABASE_URL.includes('твои-цифры')) {
-                grid.innerHTML = '<div class="error-msg"><b>Ошибка!</b><br>Вы не вставили ключи Supabase в код (строка 150).</div>';
+            if (SUPABASE_KEY.includes('ВСТАВЬ')) {
+                grid.innerHTML = '<div class="error-msg"><b>Ошибка!</b><br>Вы не вставили API Key в код (строка 151).</div>';
                 return;
             }
 
