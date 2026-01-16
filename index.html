@@ -14,13 +14,13 @@
         .table-card.done { border: 2.5px solid var(--green); background: #F0FFF4; }
         .t-num { font-size: 26px; font-weight: 700; color: var(--blue); }
         .done .t-num { color: var(--green); }
-        .btn-sec { background: #E5E5EA; color: var(--blue); padding: 14px; border-radius: 12px; border: none; font-size: 17px; font-weight: 600; width: calc(100% - 40px); margin: 0 20px; }
+        .btn-sec { background: #E5E5EA; color: var(--blue); padding: 14px; border-radius: 12px; border: none; font-size: 17px; font-weight: 600; width: calc(100% - 40px); margin: 0 20px; cursor: pointer; }
     </style>
 </head>
 <body>
     <header><h1>Alpha</h1><div style="color:var(--blue); font-weight:500;">Сегодня</div></header>
     <div class="grid" id="tablesGrid"></div>
-    <button class="btn-sec">История и Статистика</button>
+    <button class="btn-sec" onclick="loadGrid()">Обновить</button>
 
     <script>
         const S_URL = 'https://sdvqayobvrxlmvytshes.supabase.co';
@@ -29,9 +29,11 @@
 
         async function loadGrid() {
             const grid = document.getElementById('tablesGrid');
-            grid.innerHTML = '...';
+            grid.innerHTML = '<div style="grid-column:1/4;text-align:center;">Загрузка...</div>';
+            
             const { data } = await supabase.from('attendance').select('table_number').eq('is_present', true);
             const activeTables = new Set(data?.map(r => r.table_number));
+            
             grid.innerHTML = '';
             for (let i = 1; i <= 12; i++) {
                 const btn = document.createElement('button');
