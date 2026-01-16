@@ -34,26 +34,18 @@
         .btn-main { background: var(--blue); color: white; }
         .btn-sec { background: #E5E5EA; color: var(--blue); }
         .text-btn { background: none; border: none; color: var(--blue); font-size: 17px; cursor: pointer; }
+        .stats-detail { display: none; background: #F8F8F8; padding: 12px 16px; font-size: 14px; border-bottom: 0.5px solid var(--separator); }
+        .stats-detail.open { display: block; }
     </style>
 </head>
 <body>
     <div class="view-home">
-        <header>
-            <h1>Alpha</h1>
-            <div class="date-btn">
-                <span id="dateBtnLabel">Сегодня</span>
-                <input type="date" id="datePicker" class="date-input-hidden" onchange="changeDate(this.value)">
-            </div>
-        </header>
+        <header><h1>Alpha</h1><div class="date-btn"><span id="dateBtnLabel">Сегодня</span><input type="date" id="datePicker" class="date-input-hidden" onchange="changeDate(this.value)"></div></header>
         <div class="grid" id="tablesGrid"></div>
         <div style="padding: 0 20px;"><button onclick="openStats()" class="btn btn-sec" style="width: 100%;">История и Статистика</button></div>
     </div>
     <div id="modal-table" class="modal-view">
-        <header>
-            <button onclick="closeModal('modal-table')" class="text-btn">Назад</button>
-            <h2 id="tableTitle">Стол</h2>
-            <button onclick="toggleEditMode()" class="text-btn" id="editBtn">Изм.</button>
-        </header>
+        <header><button onclick="closeModal('modal-table')" class="text-btn">Назад</button><h2 id="tableTitle">Стол</h2><button onclick="toggleEditMode()" class="text-btn" id="editBtn">Изм.</button></header>
         <div class="list-wrap"><div class="ios-list" id="guestListContainer"></div><button class="text-btn" style="padding: 16px; width:100%; text-align:left;" onclick="addNewGuest()">+ Добавить гостя</button></div>
         <div class="fab-bar"><button class="btn btn-main" onclick="saveAttendance()" id="saveBtn">Сохранить</button></div>
     </div>
@@ -62,15 +54,15 @@
         <div class="list-wrap" id="statsContent"></div>
     </div>
     <script>
-        const SUPABASE_URL = 'https://sdvqayobvrxlmvytshes.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdnFheW9idnJ4bG12eXRzaGVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODg1MzQsImV4cCI6MjA4NDE2NDUzNH0.bn1n6YUzH8gx66tmh36eLYXkcXmRF8pE9u7exks6ebc';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const S_URL = 'https://sdvqayobvrxlmvytshes.supabase.co';
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdnFheW9idnJ4bG12eXRzaGVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODg1MzQsImV4cCI6MjA4NDE2NDUzNH0.bn1n6YUzH8gx66tmh36eLYXkcXmRF8pE9u7exks6ebc';
+        const supabase = window.supabase.createClient(S_URL, S_KEY);
         
         let currentTable = null, activeDate = new Date().toISOString().split('T')[0], isEditMode = false;
 
         async function loadGridStatuses() {
             const grid = document.getElementById('tablesGrid');
-            grid.innerHTML = '<div style="text-align:center; padding:20px;">...</div>';
+            grid.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
             const { data } = await supabase.from('attendance').select('table_number').eq('check_date', activeDate).eq('is_present', true);
             const activeTables = new Set(data?.map(r => r.table_number));
             grid.innerHTML = '';
@@ -98,18 +90,8 @@
             });
         }
 
-        async function addNewGuest() {
-            const name = prompt("ФИО гостя:"); if (!name) return;
-            await supabase.from('guests').insert([{ full_name: name, table_number: currentTable }]);
-            renderGuestList();
-        }
-
-        async function deleteGuest(id) {
-            if (!confirm("Удалить?")) return;
-            await supabase.from('guests').delete().eq('id', id);
-            renderGuestList();
-        }
-
+        async function addNewGuest() { const name = prompt("ФИО гостя:"); if (!name) return; await supabase.from('guests').insert([{ full_name: name, table_number: currentTable }]); renderGuestList(); }
+        async function deleteGuest(id) { if (!confirm("Удалить?")) return; await supabase.from('guests').delete().eq('id', id); renderGuestList(); }
         async function saveAttendance() {
             const btn = document.getElementById('saveBtn'); btn.innerText = "Сохранение...";
             const inputs = document.querySelectorAll('#guestListContainer input[type="checkbox"]'), updates = Array.from(inputs).map(i => ({ guest_id: i.dataset.id, check_date: activeDate, is_present: i.checked, table_number: currentTable }));
@@ -128,7 +110,7 @@
                 const dayLog = data.filter(r => r.check_date === d), byTable = {};
                 dayLog.forEach(r => byTable[r.table_number] = (byTable[r.table_number] || 0) + 1);
                 let details = ''; for(let t=1; t<=12; t++) if(byTable[t]) details += `Стол ${t}: <b>${byTable[t]}</b><br>`;
-                container.querySelector('.ios-list').innerHTML += `<div class="guest-row" onclick="this.nextElementSibling.classList.toggle('open')"><span>${d}</span><span class="count-badge">${dayLog.length}</span></div><div style="display:none; padding:10px; background:#f9f9f9;" class="stats-detail">${details}</div>`;
+                container.querySelector('.ios-list').innerHTML += `<div class="guest-row" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'"><span>${d}</span><span class="count-badge">${dayLog.length}</span></div><div style="display:none; padding:10px; background:#f9f9f9;">${details}</div>`;
             });
         }
 
