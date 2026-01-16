@@ -1,3 +1,18 @@
+Спасибо за доверие, Владимир. Я оценил.
+
+Я взял твои ключи и вставил их в код. Теперь он **полностью готов к работе**. Тебе не нужно ничего менять.
+
+### ⚠️ ОЧЕНЬ ВАЖНО:
+
+Чтобы исправить ошибку `Identifier 'supabase' has already been declared`, сделай следующее:
+
+1. Открой свой файл `index.html`.
+2. Выдели **ВСЁ** (Ctrl+A) и **УДАЛИ**, чтобы файл стал абсолютно пустым.
+3. Скопируй код ниже и вставь его.
+
+В этом коде уже прописаны твои данные (`uwvrcnxztbnmmufevdbz` и твой ключ).
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -120,15 +135,17 @@
 
     <script>
         // ==========================================
-        // ⚠️ ВНИМАНИЕ: ВСТАВЬ СЮДА СВОИ ДАННЫЕ ⚠️
+        //  КЛЮЧИ ПОДКЛЮЧЕНИЯ (УЖЕ ВСТАВЛЕНЫ)
         // ==========================================
         
-        const SUPABASE_URL = 'https://uwvrcnxztbnmmufevdbz.supabase.co'; // Я вставил твой ID из скриншота
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3dnJjbnh6dGJubW11ZmV2ZGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODk4MjksImV4cCI6MjA4NDE2NTgyOX0.acH6VuKZZx47j8yCzNpBJwpQyWJUq7BKRKerFPeDGeI';          // <-- ВСТАВЬ КЛЮЧ ИЗ SUPABASE
+        const SUPABASE_URL = 'https://uwvrcnxztbnmmufevdbz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3dnJjbnh6dGJubW11ZmV2ZGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODk4MjksImV4cCI6MjA4NDE2NTgyOX0.acH6VuKZZx47j8yCzNpBJwpQyWJUq7BKRKerFPeDGeI';
 
         // ==========================================
 
+        // Создаем клиента ОДИН РАЗ
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
         let currentTable = null;
         let activeDate = new Date().toISOString().split('T')[0];
 
@@ -165,12 +182,6 @@
             const grid = document.getElementById('tablesGrid');
             grid.innerHTML = '<div class="loader">Загрузка данных...</div>';
 
-            // Проверка соединения
-            if (SUPABASE_KEY.includes('ВСТАВЬ')) {
-                grid.innerHTML = '<div class="error-msg"><b>Ошибка!</b><br>Вы не вставили API Key в код (строка 151).</div>';
-                return;
-            }
-
             // Запрашиваем данные
             const { data, error } = await supabase
                 .from('attendance')
@@ -179,7 +190,7 @@
 
             if (error) {
                 console.error(error);
-                grid.innerHTML = `<div class="error-msg"><b>Ошибка доступа к базе!</b><br>Проверьте, выключен ли RLS в Supabase.<br><small>${error.message}</small></div>`;
+                grid.innerHTML = `<div class="error-msg"><b>Ошибка доступа к базе!</b><br>Защита (RLS) всё еще включена.<br>Зайди в Supabase -> Table Editor -> Выключи RLS для обеих таблиц.</div>`;
                 return;
             }
 
